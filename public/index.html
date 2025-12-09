@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Context-Aware Question Answering System</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f7f9fc;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #555;
+      font-size: 15px;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      padding: 30px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .upload-zone {
+      border: 2px dashed #a0b4cc;
+      padding: 40px;
+      border-radius: 10px;
+      background-color: #f9fbfd;
+      color: #444;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .upload-zone:hover {
+      background-color: #eaf1f8;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .btn {
+      background-color: #2f67f6;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .btn:hover {
+      background-color: #1e4bd9;
+    }
+
+    .input-box {
+      width: 100%;
+      max-width: 500px;
+      padding: 12px;
+      border: 1px solid #cfdce8;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 15px;
+    }
+
+    .icon {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    #uploadStatus,
+    #answerBox {
+      margin-top: 20px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧠 <strong>Context-Aware Question Answering System</strong></h1>
+    <p class="subtitle">Upload documents and get intelligent answers to your questions</p>
+
+    <!-- Upload Section -->
+    <div class="card">
+      <div class="icon">📤</div>
+      <h2>Upload Document</h2>
+      <p>Upload a document to ask questions about its content</p>
+
+      <label class="upload-zone" for="fileInput">
+        <div class="upload-text">
+          <p>📂 Drag and drop your file here</p>
+          <p><strong>or click to browse</strong></p>
+        </div>
+      </label>
+      <input type="file" id="fileInput" />
+      <br />
+      <button class="btn" onclick="handleUpload()">Upload Document</button>
+      <div id="uploadStatus"></div>
+    </div>
+
+    <!-- Ask Section -->
+    <div class="card">
+      <div class="icon">💬</div>
+      <h2>Ask a Question</h2>
+      <p>Upload a document first to start asking questions</p>
+      <input
+        type="text"
+        class="input-box"
+        id="questionInput"
+        placeholder="What would you like to know about the document?"
+      />
+      <br />
+      <button class="btn" onclick="handleAsk()">Ask Question</button>
+      <div id="answerBox"></div>
+    </div>
+  </div>
+
+  <script>
+    async function handleUpload() {
+      const fileInput = document.getElementById("fileInput");
+      const uploadStatus = document.getElementById("uploadStatus");
+
+      if (!fileInput.files.length) {
+        uploadStatus.style.color = "red";
+        uploadStatus.innerText = "❗ Please select a file first.";
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await fetch("/upload", {
+          method: "POST",
+          body: formData,
+          headers: {
+            "x-filename": file.name
+          }
+        });
+
+        const result = await res.json();
+
+        if (res.status === 409 || res.status === 400 || res.status === 500) {
+          uploadStatus.style.color = "red";
+          uploadStatus.innerText = `❌ ${result.error}`;
+        } else {
+          uploadStatus.style.color = "green";
+          uploadStatus.innerHTML = `
+            ✅ ${result.message}<br>
+            <strong>Total Chunks:</strong> ${result.chunks.length}<br>
+            <ul>
+              ${result.chunks.slice(0, 3).map(chunk => `<li>${chunk.substring(0, 100)}...</li>`).join('')}
+            </ul>
+          `;
+        }
+
+      } catch (err) {
+        console.error(err);
+        uploadStatus.style.color = "red";
+        uploadStatus.innerText = "❌ Something went wrong.";
+      }
+    }
+
+    async function handleAsk() {
+      const question = document.getElementById("questionInput").value.trim();
+      const answerBox = document.getElementById("answerBox");
+
+      if (!question) {
+        answerBox.style.color = "red";
+        answerBox.innerText = "❗ Please enter a question.";
+        return;
+      }
+
+      try {
+        const res = await fetch("/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await res.json();
+        answerBox.style.color = "#333";
+        answerBox.innerHTML = `🤖 <strong>Answer:</strong> ${data.answer || data.error}`;
+      } catch (error) {
+        console.error(error);
+        answerBox.style.color = "red";
+        answerBox.innerText = "❌ Failed to fetch answer.";
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+.env
+node_modules/
+vertex-key.json
+*.json
+*.envgit rm --cached vertex-key.json
+
+
+
+

@@ -1,0 +1,4 @@
+chromadb
+vertexai
+numpy==1.24.3
+google-cloud-aiplatform==1.71.1
