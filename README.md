@@ -25,5 +25,19 @@ This project is a Retrieval-Augmented Generation (RAG) application that answers 
 ## 📷 Screenshots
 (Add screenshots here)
 
+## API Example
+
+POST /ask
+
+Request:
+{
+  "question": "What is this document about?"
+}
+
+Response:
+{
+  "answer": "This document explains..."
+}
+
 ## 👨‍💻 Author
 Beri Sanjay
